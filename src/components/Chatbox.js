@@ -1,4 +1,3 @@
-// src/components/Chatbox.js
 import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import axios from 'axios';
@@ -39,7 +38,7 @@ const Message = styled.div`
 
 const CLAUDE_API_KEY = 'your_claude_api_key_here';
 
-function Chatbox({ onResponse }) {
+function Chatbox({ onCodeGeneration }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -61,8 +60,8 @@ function Chatbox({ onResponse }) {
 
     try {
       const response = await axios.post('https://api.anthropic.com/v1/conversations', {
-        prompt: input,
-        max_tokens_to_sample: 300,
+        prompt: `Based on the following user request, generate React code to update our supply chain dashboard. The code should be a complete, functional React component that can be directly inserted into our application. Here's the user's request: "${input}"`,
+        max_tokens_to_sample: 1000,
         model: 'claude-v1',
       }, {
         headers: {
@@ -74,24 +73,23 @@ function Chatbox({ onResponse }) {
       const botMessage = { text: response.data.completion, isUser: false };
       setMessages(prev => [...prev, botMessage]);
 
-      // Parse the bot's response and update the dashboard
-      const dashboardUpdates = parseBotResponse(response.data.completion);
-      onResponse(dashboardUpdates);
+      // Extract React code from the response and pass it to the parent component
+      const reactCode = extractReactCode(response.data.completion);
+      if (reactCode) {
+        onCodeGeneration(reactCode);
+      }
     } catch (error) {
       console.error('Error calling Claude API:', error);
       setMessages(prev => [...prev, { text: 'Sorry, I encountered an error.', isUser: false }]);
     }
   };
 
-  const parseBotResponse = (response) => {
-    // This is a placeholder function. In a real application, you'd implement
-    // logic here to parse the bot's response and extract relevant updates
-    // for the map, watchlist, and analytics.
-    return {
-      mapUpdate: null,
-      watchlistUpdate: null,
-      analyticsUpdate: null,
-    };
+  const extractReactCode = (response) => {
+    // This function should extract the React code from Claude's response
+    // You might need to implement a more sophisticated extraction method
+    const codeRegex = /```jsx([\s\S]*?)```/;
+    const match = response.match(codeRegex);
+    return match ? match[1].trim() : null;
   };
 
   return (

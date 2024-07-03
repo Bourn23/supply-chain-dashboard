@@ -1,4 +1,3 @@
-// src/components/Dashboard.js
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import SupplyChainMap from './SupplyChainMap';
@@ -11,7 +10,7 @@ const DashboardContainer = styled.div`
   flex-direction: column;
   gap: 20px;
   position: relative;
-  height: calc(100vh - 80px); // Adjust based on your header height
+  height: calc(100vh - 80px);
 `;
 
 const MapContainer = styled.div`
@@ -44,49 +43,53 @@ const ChatboxContainer = styled.div`
   z-index: 1000;
 `;
 
+const DynamicComponentContainer = styled.div`
+  margin-top: 20px;
+`;
+
 function Dashboard() {
   const [selectedCompany, setSelectedCompany] = useState(null);
-  const [mapData, setMapData] = useState(/* initial map data */);
-  const [watchlistData, setWatchlistData] = useState(/* initial watchlist data */);
-  const [analyticsData, setAnalyticsData] = useState(/* initial analytics data */);
+  const [DynamicComponent, setDynamicComponent] = useState(null);
 
   const handleCompanySelect = (company) => {
     setSelectedCompany(company);
   };
 
-  const handleChatbotResponse = (response) => {
-    // Update state based on chatbot response
-    if (response.mapUpdate) {
-      setMapData(response.mapUpdate);
-    }
-    if (response.watchlistUpdate) {
-      setWatchlistData(response.watchlistUpdate);
-    }
-    if (response.analyticsUpdate) {
-      setAnalyticsData(response.analyticsUpdate);
+  const handleCodeGeneration = (code) => {
+    try {
+      // Use babel-standalone to transform the JSX code into a React component
+      const transformedCode = Babel.transform(code, { presets: ['react'] }).code;
+      const ComponentFunction = new Function('React', 'styled', 'return ' + transformedCode);
+      const NewComponent = ComponentFunction(React, styled);
+      setDynamicComponent(() => NewComponent);
+    } catch (error) {
+      console.error('Error creating dynamic component:', error);
     }
   };
 
   return (
     <DashboardContainer>
       <MapContainer>
-        <SupplyChainMap data={mapData} />
+        <SupplyChainMap />
       </MapContainer>
       <BottomSection>
         <WatchlistContainer>
-          <Watchlist data={watchlistData} onCompanySelect={handleCompanySelect} />
+          <Watchlist onCompanySelect={handleCompanySelect} />
         </WatchlistContainer>
         <AnalyticsContainer>
           {selectedCompany ? (
-            <AnalyticsCharts company={selectedCompany} data={analyticsData} />
+            <AnalyticsCharts company={selectedCompany} />
           ) : (
             <p>Select a company from the watchlist to view analytics.</p>
           )}
         </AnalyticsContainer>
       </BottomSection>
       <ChatboxContainer>
-        <Chatbox onResponse={handleChatbotResponse} />
+        <Chatbox onCodeGeneration={handleCodeGeneration} />
       </ChatboxContainer>
+      <DynamicComponentContainer>
+        {DynamicComponent && <DynamicComponent />}
+      </DynamicComponentContainer>
     </DashboardContainer>
   );
 }
